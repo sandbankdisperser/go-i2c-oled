@@ -7,7 +7,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/waxdred/go-i2c-oled/ssd1306"
+	"github.com/sandbankdisperser/go-i2c-oled/ssd1306"
 )
 
 // Constants for OLED commands and addressing const (

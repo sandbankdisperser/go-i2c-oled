@@ -3,7 +3,7 @@ package goi2coled
 import (
 	"fmt"
 
-	"github.com/waxdred/go-i2c-oled/ssd1306"
+	"github.com/sandbankdisperser/go-i2c-oled/ssd1306"
 )
 
 func (i *I2c) SetContrast(contrast int) error {
