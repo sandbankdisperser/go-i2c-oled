@@ -1,7 +1,6 @@
 package SH1106
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -23,23 +22,6 @@ const (
 	SH110X_MEMORYMODE          = 0x20
 	SH110X_DISPLAYALLON_RESUME = 0xA4
 )
-
-type Display interface {
-	Initialize() error
-}
-
-func NewDisplay(w, h int, fd *os.File, vccstate byte) (Display, error) {
-	switch {
-	case w == 128 && h == 32:
-		return NewSSD1306_128_32(fd, vccstate), nil
-	case w == 128 && h == 64:
-		return NewSSD1306_128_64(fd, vccstate), nil
-	case w == 96 && h == 16:
-		return NewSSD1306_96_16(fd, vccstate), nil
-	default:
-		return nil, fmt.Errorf("unsupported display dimensions: %dx%d", w, h)
-	}
-}
 
 // writeCommand sends a single command byte to the SSD1306 device.
 func writeCommand(fd *os.File, cmd byte) (int, error) {

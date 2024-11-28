@@ -1,5 +1,12 @@
 package goi2coled
 
+type Display interface {
+	Initialize() error
+	Width() int
+	Height() int
+	VCCState() byte
+}
+
 // Turn off OLED display
 func (i *I2c) DisplayOff() (int, error) {
 	return i.WriteCommand(OLED_CMD_DISPLAY_OFF)

@@ -6,8 +6,6 @@ import (
 	"image/draw"
 	"os"
 	"syscall"
-
-	"github.com/sandbankdisperser/go-i2c-oled/ssd1306"
 )
 
 // Constants for OLED commands and addressing const (
@@ -61,7 +59,7 @@ type I2c struct {
 }
 
 // Function to initialize I2C with given parameters
-func NewI2c(vccState, h, w, address, bus int) (*I2c, error) {
+func NewI2c(address, bus int, display Display) (*I2c, error) {
 	fd, err := os.OpenFile(fmt.Sprintf("/dev/i2c-%d", bus), os.O_RDWR, os.ModeExclusive)
 	if err != nil {
 		return nil, err
@@ -72,18 +70,14 @@ func NewI2c(vccState, h, w, address, bus int) (*I2c, error) {
 		fd.Close()
 		return nil, err
 	}
-	display, err := ssd1306.NewDisplay(int(w), int(h), fd, byte(vccState))
-	if err != nil {
-		return nil, err
-	}
 	display.Initialize()
 
 	i2c := &I2c{
 		address: address,
 		bus:     bus,
 		fd:      fd,
-		screen:  newScreen(vccState, h, w),
-		Img:     image.NewRGBA((image.Rect(0, 0, int(w), int(h)))),
+		screen:  newScreen(int(display.VCCState()), display.Height(), display.Width()),
+		Img:     image.NewRGBA((image.Rect(0, 0, int(display.Width()), int(display.Height())))),
 	}
 	i2c.DisplayOn()
 	return i2c, nil

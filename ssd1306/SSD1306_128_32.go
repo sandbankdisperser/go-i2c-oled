@@ -10,6 +10,16 @@ type SSD1306_128_32 struct {
 	vccstate byte
 }
 
+func (d *SSD1306_128_32) VCCState() byte {
+	return d.vccstate
+}
+func (d *SSD1306_128_32) Height() int {
+	return 32
+}
+func (d *SSD1306_128_32) Width() int {
+	return 128
+}
+
 // NewSSD1306_128_32 creates a new instance of the SSD1306_128_32 structure.
 func NewSSD1306_128_32(fd *os.File, vccstate byte) *SSD1306_128_32 {
 	return &SSD1306_128_32{
