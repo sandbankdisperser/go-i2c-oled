@@ -5,20 +5,20 @@ import (
 	"os"
 )
 
-type SSD1306_128_64 struct {
+type SH1106_128_64 struct {
 	fd       *os.File
 	vccstate byte
 }
 
 // NewSSD1306_128_64 creates a new instance of the SSD1306_128_64 structure.
-func NewSSD1306_128_64(fd *os.File, vccstate byte) *SSD1306_128_64 {
-	return &SSD1306_128_64{
+func NewSSD1306_128_64(fd *os.File, vccstate byte) *SH1106_128_64 {
+	return &SH1106_128_64{
 		fd:       fd,
 		vccstate: vccstate,
 	}
 }
 
-func (d *SSD1306_128_64) Initialize() error {
+func (d *SH1106_128_64) Initialize() error {
 	fmt.Println("Initialize screen")
 
 	data := []byte{

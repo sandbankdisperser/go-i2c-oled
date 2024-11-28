@@ -2,20 +2,20 @@ package SH1106
 
 import "os"
 
-type SSD1306_96_16 struct {
+type SH1106_96_16 struct {
 	fd       *os.File
 	vccstate byte
 }
 
 // NewSSD1306_96_16 creates a new instance of the SSD1306_96_16 structure.
-func NewSSD1306_96_16(fd *os.File, vccstate byte) *SSD1306_96_16 {
-	return &SSD1306_96_16{
+func NewSSD1306_96_16(fd *os.File, vccstate byte) *SH1106_96_16 {
+	return &SH1106_96_16{
 		fd:       fd,
 		vccstate: vccstate,
 	}
 }
 
-func (d *SSD1306_96_16) Initialize() error {
+func (d *SH1106_96_16) Initialize() error {
 	data := []byte{
 		SH110X_DISPLAYOFF,               // 0xAE
 		SH110X_SETDISPLAYCLOCKDIV, 0x80, // 0xD5, 0x80,
