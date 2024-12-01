@@ -1,8 +1,6 @@
 package SH1106
 
-import (
-	"os"
-)
+import "github.com/sandbankdisperser/go-i2c-oled/i2c"
 
 const (
 	SH110X_CMD                 = 0x80
@@ -23,15 +21,30 @@ const (
 	SH110X_DISPLAYALLON_RESUME = 0xA4
 )
 
-// writeCommand sends a single command byte to the SSD1306 device.
-func writeCommand(fd *os.File, cmd byte) (int, error) {
-	return fd.Write([]byte{SH110X_CMD, cmd})
-}
+const (
+	I2C_SLAVE = 0x0703
+
+	OLED_CMD                 = 0x80
+	OLED_CMD_COL_ADDRESSING  = 0x21
+	OLED_CMD_PAGE_ADDRESSING = 0x22
+	OLED_CMD_CONTRAST        = 0x81
+	OLED_CMD_START_COLUMN    = 0x00
+	OLED_CMD_HIGH_COLUMN     = 0x10
+	OLED_CMD_DISPLAY_OFF     = 0xAE
+	OLED_CMD_DISPLAY_ON      = 0xAF
+
+	OLED_DATA            = 0x40
+	OLED_ADRESSING       = 0x21
+	OLED_ADRESSING_START = 0xB0
+	OLED_ADRESSING_COL   = 0x21
+	OLED_END             = 0x10
+	PIXSIZE              = 8
+)
 
 // sendCommands sends a sequence of command bytes to the SSD1306 device.
-func sendCommands(fd *os.File, commands ...byte) error {
+func sendCommands(conn *i2c.I2c, commands ...byte) error {
 	for _, cmd := range commands {
-		if _, err := writeCommand(fd, cmd); err != nil {
+		if _, err := conn.WriteCommand(cmd); err != nil {
 			return err
 		}
 	}

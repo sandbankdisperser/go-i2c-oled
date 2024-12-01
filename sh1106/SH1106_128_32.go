@@ -1,29 +1,31 @@
 package SH1106
 
-import (
-	"os"
-)
+import "github.com/sandbankdisperser/go-i2c-oled/i2c"
 
 type SH1106_128_32 struct {
-	fd       *os.File
-	vccstate byte
+	conn     *i2c.I2c
+	vccState byte
+	width    int
+	height   int
+	contrast int
 }
 
 func (d *SH1106_128_32) VCCState() byte {
-	return d.vccstate
+	return d.vccState
 }
 func (d *SH1106_128_32) Height() int {
-	return 32
+	return d.height
 }
 func (d *SH1106_128_32) Width() int {
-	return 128
+	return d.width
 }
 
-// NewSSD1306_128_32 creates a new instance of the SSD1306_128_32 structure.
-func NewSSD1306_128_32(fd *os.File, vccstate byte) *SH1106_128_32 {
+// NewSSD1306_96_16 creates a new instance of the SSD1306_96_16 structure.
+func NewSH1106_128_32(fd *i2c.I2c, vccstate byte) *SH1106_128_32 {
 	return &SH1106_128_32{
-		fd:       fd,
-		vccstate: vccstate,
+		conn:   fd,
+		height: 32,
+		width:  128,
 	}
 }
 
@@ -47,5 +49,5 @@ func (d *SH1106_128_32) Initialize() error {
 		SH110X_DISPLAYALLON_RESUME,
 	}
 
-	return sendCommands(d.fd, data...)
+	return sendCommands(d.conn, data...)
 }

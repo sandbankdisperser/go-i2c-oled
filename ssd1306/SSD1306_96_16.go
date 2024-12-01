@@ -1,27 +1,41 @@
 package ssd1306
 
-import "os"
+import (
+	"fmt"
+	"image"
+	"image/color"
+
+	"github.com/sandbankdisperser/go-i2c-oled/i2c"
+)
 
 type SSD1306_96_16 struct {
-	fd       *os.File
-	vccstate byte
+	conn     *i2c.I2c
+	vccState byte
+	width    int
+	height   int
+	contrast int
 }
 
 func (d *SSD1306_96_16) VCCState() byte {
-	return d.vccstate
+	return d.vccState
 }
 func (d *SSD1306_96_16) Height() int {
-	return 16
+	return d.height
 }
 func (d *SSD1306_96_16) Width() int {
-	return 96
+	return d.width
+}
+func (d *SSD1306_96_16) Draw() {
+
 }
 
 // NewSSD1306_96_16 creates a new instance of the SSD1306_96_16 structure.
-func NewSSD1306_96_16(fd *os.File, vccstate byte) *SSD1306_96_16 {
+func NewSSD1306_96_16(fd *i2c.I2c, vccstate byte) *SSD1306_96_16 {
 	return &SSD1306_96_16{
-		fd:       fd,
-		vccstate: vccstate,
+		conn:     fd,
+		height:   16,
+		width:    96,
+		vccState: vccstate,
 	}
 }
 
@@ -39,7 +53,7 @@ func (d *SSD1306_96_16) Initialize() error {
 	}
 
 	// Adjust charge pump settings based on vccstate.
-	if d.vccstate == SSD1306_EXTERNALVCC {
+	if d.vccState == SSD1306_EXTERNALVCC {
 		data = append(data, byte(0x10)) // External Vcc
 	} else {
 		data = append(data, byte(0x14)) // Internal Vcc
@@ -59,7 +73,7 @@ func (d *SSD1306_96_16) Initialize() error {
 	}...)
 
 	// Set precharge period based on vccstate.
-	if d.vccstate == SSD1306_EXTERNALVCC {
+	if d.vccState == SSD1306_EXTERNALVCC {
 		data = append(data, byte(0x22)) // Precharge value for External Vcc
 	} else {
 		data = append(data, byte(0xF1)) // Precharge value for Internal Vcc
@@ -73,5 +87,57 @@ func (d *SSD1306_96_16) Initialize() error {
 		SSD1306_NORMALDISPLAY,       // 0xA6
 	}...)
 
-	return sendCommands(d.fd, data...)
+	return sendCommands(d.conn, data...)
+}
+
+func (i *SSD1306_96_16) SetContrast(contrast int) error {
+	var err error
+	if contrast < 0 || contrast > 255 {
+		return fmt.Errorf("Contrast must be a values from 0 to 255")
+	}
+	if _, err = i.conn.WriteCommand(OLED_CMD_CONTRAST); err != nil {
+		return err
+	}
+	_, err = i.conn.WriteCommand(byte(contrast))
+	i.contrast = contrast
+	return err
+}
+
+func (i *SSD1306_96_16) SetDim(dim bool) error {
+	contrast := i.contrast
+	if !dim {
+		if i.vccState == SSD1306_EXTERNALVCC {
+			contrast = 0x9f
+		} else {
+			contrast = 0xCF
+		}
+	}
+	return i.SetContrast(contrast)
+}
+
+func (i *SSD1306_96_16) DrawImage(img *image.RGBA) {
+	bounds := img.Bounds()
+	if bounds.Max.X != i.width || i.height != bounds.Max.Y {
+		panic(fmt.Sprintf("Error: Size of image is not %dx%d pixels.", i.width, i.height))
+	}
+	size := i.width * i.height / PIXSIZE
+	data := make([]byte, size)
+	for page := 0; page < i.height/8; page++ {
+		for x := 0; x < i.width; x++ {
+			bits := uint8(0)
+			for bit := 0; bit < 8; bit++ {
+				y := page*8 + 7 - bit
+				if y < i.height {
+					col := color.GrayModel.Convert(img.At(x, y)).(color.Gray)
+					if col.Y > 127 {
+						bits = (bits << 1) | 1
+					} else {
+						bits = bits << 1
+					}
+				}
+			}
+			index := page*i.width + x
+			data[index] = byte(bits)
+		}
+	}
 }

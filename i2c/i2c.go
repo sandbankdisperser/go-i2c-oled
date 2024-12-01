@@ -1,8 +1,7 @@
-package goi2coled
+package i2c
 
 import (
 	"fmt"
-	"image"
 	"image/draw"
 	"os"
 	"syscall"
@@ -59,7 +58,7 @@ type I2c struct {
 }
 
 // Function to initialize I2C with given parameters
-func NewI2c(address, bus int, display Display) (*I2c, error) {
+func NewI2c(address, bus int) (*I2c, error) {
 	fd, err := os.OpenFile(fmt.Sprintf("/dev/i2c-%d", bus), os.O_RDWR, os.ModeExclusive)
 	if err != nil {
 		return nil, err
@@ -70,16 +69,14 @@ func NewI2c(address, bus int, display Display) (*I2c, error) {
 		fd.Close()
 		return nil, err
 	}
-	display.Initialize()
 
 	i2c := &I2c{
 		address: address,
 		bus:     bus,
 		fd:      fd,
-		screen:  newScreen(int(display.VCCState()), display.Height(), display.Width()),
-		Img:     image.NewRGBA((image.Rect(0, 0, int(display.Width()), int(display.Height())))),
+		// screen:  newScreen(int(display.VCCState()), display.Height(), display.Width()),
+		// Img:     image.NewRGBA((image.Rect(0, 0, int(display.Width()), int(display.Height())))),
 	}
-	i2c.DisplayOn()
 	return i2c, nil
 }
 
@@ -92,4 +89,26 @@ func (i *I2c) Close() error {
 func (i *I2c) Clear() {
 	size := i.screen.w * i.screen.h / PIXSIZE
 	i.buffer = make([]byte, size)
+}
+
+// Write data to I2C
+func (i *I2c) Write(b []byte) (int, error) {
+	return i.fd.Write(b)
+}
+
+// Send command to OLED
+func (i *I2c) WriteCommand(cmd byte) (int, error) {
+	return i.Write([]byte{OLED_CMD, cmd})
+}
+
+// Send data to OLED
+func (i *I2c) WriteData(data []byte) (int, error) {
+	res := 0
+	for _, value := range data {
+		if _, err := i.Write([]byte{OLED_DATA, value}); err != nil {
+			return res, err
+		}
+		res++
+	}
+	return res, nil
 }
