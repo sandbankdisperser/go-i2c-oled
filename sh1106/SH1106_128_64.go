@@ -30,7 +30,7 @@ func (d *SH1106_128_64) Width() int {
 func NewSH1106_128_64(fd *i2c.I2c, vccstate byte) *SH1106_128_64 {
 	return &SH1106_128_64{
 		conn:   fd,
-		height: 32,
+		height: 64,
 		width:  128,
 	}
 }
