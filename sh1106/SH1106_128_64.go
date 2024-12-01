@@ -36,8 +36,6 @@ func NewSH1106_128_64(fd *i2c.I2c, vccstate byte) *SH1106_128_64 {
 }
 
 func (d *SH1106_128_64) Initialize() error {
-	fmt.Println("Initialize screen")
-
 	data := []byte{
 		SH110X_DISPLAYOFF,               // 0xAE
 		SH110X_SETDISPLAYCLOCKDIV, 0x80, // 0xD5, 0x80,
@@ -95,19 +93,19 @@ func (i *SH1106_128_64) SetDim(dim bool) error {
 	return i.SetContrast(contrast)
 }
 
-func (i *SH1106_128_64) DrawImage(img *image.RGBA) {
+func (d *SH1106_128_64) DrawImage(img *image.RGBA) error {
 	bounds := img.Bounds()
-	if bounds.Max.X != i.width || i.height != bounds.Max.Y {
-		panic(fmt.Sprintf("Error: Size of image is not %dx%d pixels.", i.width, i.height))
+	if bounds.Max.X != d.width || d.height != bounds.Max.Y {
+		panic(fmt.Sprintf("Error: Size of image is not %dx%d pixels.", d.width, d.height))
 	}
-	size := i.width * i.height / PIXSIZE
+	size := d.width * d.height / PIXSIZE
 	data := make([]byte, size)
-	for page := 0; page < i.height/8; page++ {
-		for x := 0; x < i.width; x++ {
+	for page := 0; page < d.height/8; page++ {
+		for x := 0; x < d.width; x++ {
 			bits := uint8(0)
 			for bit := 0; bit < 8; bit++ {
 				y := page*8 + 7 - bit
-				if y < i.height {
+				if y < d.height {
 					col := color.GrayModel.Convert(img.At(x, y)).(color.Gray)
 					if col.Y > 127 {
 						bits = (bits << 1) | 1
@@ -116,8 +114,22 @@ func (i *SH1106_128_64) DrawImage(img *image.RGBA) {
 					}
 				}
 			}
-			index := page*i.width + x
+			index := page*d.width + x
 			data[index] = byte(bits)
 		}
 	}
+	d.conn.WriteCommand(OLED_CMD_COL_ADDRESSING)
+	d.conn.WriteCommand(0)
+	d.conn.WriteCommand(byte(d.width - 1))
+	d.conn.WriteCommand(OLED_CMD_PAGE_ADDRESSING)
+	d.conn.WriteCommand(0)
+	d.conn.WriteCommand(byte(d.height / 8))
+	for i := 0; i < len(data); i += 16 {
+		current := data[i : i+16]
+		_, err := d.conn.WriteData(current)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
